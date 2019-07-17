@@ -1,0 +1,77 @@
+$ start-dfs.sh
+$ start-yarn.sh
+$ jps
+3555 ResourceManager
+3971 Jps
+3172 DataNode
+3049 NameNode
+3677 NodeManager
+3390 SecondaryNameNode
+==============================================================================
+#To Create a Root Dir for Data Loading in hadoop
+..............................................................................
+$ hadoop fs -mkdir -p /adarsh/hadoop/data
+
+#For Deletion of the Dir in hdfs
+$ hadoop fs -rm -r /adarsh/hadoop/xyz
+#For Deletion of the file in the hdfs dir
+$ hadoop fs -rm -r /adarsh/hadoop/data/*
+==============================================================================
+#To List the dir for Data loadig in hadoop
+..............................................................................
+$ hadoop fs -ls /adarsh/hadoop
+
+==============================================================================
+#To load the data into the hadoop  (COPYING FILE FROM LFS TO HDFS)
+#create file
+#load the data from file to lfs to hdfs
+#view the data file from hdfs
+..............................................................................
+$ vi input.json
+---------------------------------------------------
+{"name":"adarsh", "article":"java"}
+{"name":"adarsh", "article":"spring"}
+{"name":"adarsh", "article":"aws"}
+{"name":"radha", "article":"hadoop"}
+{"name":"radha", "article":"oracle"}
+{"name":"amit", "article":"fiance"}
+--------------------------------------------------
+esc :wq
+
+#to load the data to hdfs from lfs
+$ hadoop fs -copyFromLocal input.xml /adarsh/hadoop/data
+
+#to view the file in hdfs
+$ hadoop fs -ls /adarsh/hadoop/data
+
+#To list the data from loaded file from hdfs
+$ hadoop fs -cat /adarsh/hadoop/data/input.xml
+
+
+==============================================================================
+# copy the jar file to execute
+#provide the permission to execute
+$ chmod 777 HadoopJsonProcessing-1.0-SNAPSHOT.jar
+
+# To move the jar from desktop to the home dir of the user
+$ mv /home/hduser/Desktop/HadoopJsonProcessing*.jar /home/hduser/
+
+#To Execute the main
+$ hadoop jar HadoopJsonProcessing-1.0-SNAPSHOT.jar  com.espark.adarsh.hadoop.ApplicationMain  /adarsh/hadoop/data/input.json /adarsh/hadoop/data/output
+
+$ hadoop fs -ls /adarsh/hadoop/data
+-rw-r--r--   1 hduser supergroup        222 2017-07-03 03:42 /adarsh/hadoop/data/input.json
+drwxr-xr-x   - hduser supergroup          0 2017-07-03 06:51 /adarsh/hadoop/data/wordcount
+
+
+
+$ hadoop fs -ls /adarsh/hadoop/data/wordcount
+-rw-r--r--   1 hduser supergroup          0 2017-07-03 06:51 /adarsh/hadoop/data/wordcount/_SUCCESS
+-rw-r--r--   1 hduser supergroup        195 2017-07-03 06:51 /adarsh/hadoop/data/wordcount/part-r-00000
+
+$ hadoop fs -cat  /adarsh/hadoop/data/wordcount/part-r*
+{"articles":[{"article":"aws"},{"article":"spring"},{"article":"java"}],"name":"adarsh"}
+{"articles":[{"article":"oracle"},{"article":"hadoop"}],"name":"radha"}
+{"articles":[{"article":"fiance"}],"name":"amit"}
+
+

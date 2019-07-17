@@ -1,0 +1,15 @@
+Run/Submit job from the client node.
+Get new application an submit to resourcemanager.
+Copy job resources from shared filesystem such as HDFS.
+Submit application to resourcemanager
+Submit to nodemanager
+a. Start Container
+b. Lunch MRAppMaster
+Initialize job.
+Retrieve input splits.
+MRAppMaster will send allocate resourcces to resourcemanager to inform about the current resources used.
+MRAppMaster sends required to specific nodemanager.
+a. Start Container
+b. Launch task JVM.
+Child retrieves job resources from shared filesystem (HDFS).
+run MapTask or Reduce Task.

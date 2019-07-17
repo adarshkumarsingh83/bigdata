@@ -1,0 +1,45 @@
+
+
+#input file to load in the table
+$ vi employee.csv
+------------------------------------------
+1000,adarsh,1983/09/13
+1001,Amit,1986/01/04
+1002,Radha,1986/05/04
+1003,sonu,1986/05/05
+1004,Monu,1982/04/19
+------------------------------------------
+ESC:wq
+
+#To Start the pig
+$ pig -x local
+
+
+#To Dump the data
+grunt> dump employee;
+
+#To Register the jar file into the pig session
+grunt>REGISTER '/home/hduser/PigUserDefineFunction-1.0-SNAPSHOT.jar';
+
+#Alias the Udf
+grunt>DEFINE dataFormat com.espark.pig.udf.date.DateFormatter();
+grunt>DEFINE caseConvert com.espark.pig.udf.string.CaseConverter();
+
+
+#To load the data into the pig bag from lfs
+grunt> employee = LOAD '/home/hduser/employee.csv' USING PigStorage(',')as ( id:int, name:chararray, dob:chararray);
+
+#To use the pig udf into the query
+grunt> processEmployee = FOREACH employee GENERATE $0 ,caseConvert($1,'UPPER'),caseConvert($1,'LOWER'),caseConvert($1,'') , dataFormat($2,'yyyy/MM/dd');
+
+#To dump the process data
+grunt> dump processEmployee;
+
+Total input paths to process : 1
+(,1983/09/13,1983/09/13,1983/09/13,)
+(1001,AMIT,amit,Amit,04-Jan-1986)
+(1002,RADHA,radha,Radha,04-May-1986)
+(1003,SONU,sonu,Sonu,05-May-1986)
+(1004,MONU,monu,Monu,19-Apr-1982)
+
+

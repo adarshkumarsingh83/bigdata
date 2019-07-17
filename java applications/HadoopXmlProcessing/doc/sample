@@ -1,0 +1,282 @@
+import java.io.IOException;
+import java.util.List;
+import org.apache.hadoop.fs.BlockLocation;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.DataOutputBuffer;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+
+public class XmlInputFormat extends TextInputFormat {
+    public static final String START_TAG_KEY = "<employee>";
+    public static final String END_TAG_KEY = "</employee>";
+
+    /*Krishna - Creating XMLInputformat Class for reading XML File*/
+    @Override
+    public RecordReader<LongWritable, Text> createRecordReader(
+            InputSplit split, TaskAttemptContext context) {
+        return new XmlRecordReader();
+    }
+
+    public static class XmlRecordReader extends
+            RecordReader<LongWritable, Text> {
+        private byte[] startTag;
+        private byte[] endTag;
+        private long start;
+        private long end;
+        private FSDataInputStream fsin;
+        private DataOutputBuffer buffer = new DataOutputBuffer();
+        private LongWritable key = new LongWritable();
+        private Text value = new Text();
+
+        @Override
+        public void initialize(InputSplit is, TaskAttemptContext tac)
+                throws IOException, InterruptedException {
+            FileSplit fileSplit = (FileSplit) is;
+            String START_TAG_KEY = "<employee>";
+            String END_TAG_KEY = "</employee>";
+            startTag = START_TAG_KEY.getBytes("utf-8");
+            endTag = END_TAG_KEY.getBytes("utf-8");
+
+            start = fileSplit.getStart();
+            end = start + fileSplit.getLength();
+            Path file = fileSplit.getPath();
+
+            FileSystem fs = file.getFileSystem(tac.getConfiguration());
+            fsin = fs.open(fileSplit.getPath());
+            fsin.seek(start);
+
+        }
+
+        @Override
+        public boolean nextKeyValue() throws IOException, InterruptedException {
+            if (fsin.getPos() < end) {
+                if (readUntilMatch(startTag, false)) {
+                    try {
+                        buffer.write(startTag);
+                        if (readUntilMatch(endTag, true)) {
+
+                            value.set(buffer.getData(), 0, buffer.getLength());
+                            key.set(fsin.getPos());
+                            return true;
+                        }
+                    } finally {
+                        buffer.reset();
+                    }
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public LongWritable getCurrentKey() throws IOException,
+                InterruptedException {
+            return key;
+        }
+
+        @Override
+        public Text getCurrentValue() throws IOException, InterruptedException {
+            return value;
+
+        }
+
+        @Override
+        public float getProgress() throws IOException, InterruptedException {
+            return (fsin.getPos() - start) / (float) (end - start);
+        }
+
+        @Override
+        public void close() throws IOException {
+            fsin.close();
+        }
+
+        private boolean readUntilMatch(byte[] match, boolean withinBlock)
+                throws IOException {
+            int i = 0;
+            while (true) {
+                int b = fsin.read();
+
+                if (b == -1)
+                    return false;
+
+                if (withinBlock)
+                    buffer.write(b);
+
+                if (b == match[i]) {
+                    i++;
+                    if (i >= match.length)
+                        return true;
+                } else
+                    i = 0;
+
+                if (!withinBlock && i == 0 && fsin.getPos() >= end)
+                    return false;
+            }
+        }
+
+    }
+
+}
+
+
+import javax.xml.stream.XMLInputFactory;
+
+import mrdp.logging.LogWriter;
+
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.*;
+import org.apache.hadoop.io.*;
+import org.apache.hadoop.mapred.TextOutputFormat;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.GenericOptionsParser;
+
+public class XMLDriver {
+
+    /** Krishna - for processing XML file using Hadoop MapReduce
+     * @param args
+     */
+    public static void main(String[] args) {
+        try {
+
+            Configuration conf = new Configuration();
+            // conf.setInt(FixedLengthInputFormat.FIXED_RECORD_LENGTH, 2048);
+
+            // OR alternatively you can set it this way, the name of the
+            // property is
+            // "mapreduce.input.fixedlengthinputformat.record.length"
+            // conf.setInt("mapreduce.input.fixedlengthinputformat.record.length",
+            // 2048);
+            String[] arg = new GenericOptionsParser(conf, args).getRemainingArgs();
+
+            conf.set("START_TAG_KEY", "<employee>");
+            conf.set("END_TAG_KEY", "</employee>");
+
+            Job job = new Job(conf, "XML Processing Processing");
+            job.setJarByClass(XMLDriver.class);
+            job.setMapperClass(MyMapper.class);
+
+            job.setNumReduceTasks(0);
+
+            job.setInputFormatClass(XmlInputFormat.class);
+            // job.setOutputValueClass(TextOutputFormat.class);
+
+            job.setMapOutputKeyClass(Text.class);
+            job.setMapOutputValueClass(LongWritable.class);
+
+            job.setOutputKeyClass(Text.class);
+            job.setOutputValueClass(LongWritable.class);
+
+            FileInputFormat.addInputPath(job, new Path(args[0]));
+            FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+            job.waitForCompletion(true);
+
+        } catch (Exception e) {
+            LogWriter.getInstance().WriteLog("Driver Error: " + e.getMessage());
+            System.out.println(e.getMessage().toString());
+        }
+        // job.setReducerClass(ClickReducer.class);
+
+    }
+
+}
+
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import mrdp.logging.LogWriter;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+public class MyMapper extends Mapper<LongWritable, Text, Text, NullWritable> {
+
+    private static final Log LOG = LogFactory.getLog(MyMapper.class);
+
+    // Fprivate Text videoName = new Text();
+
+    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+
+        try {
+
+            InputStream is = new ByteArrayInputStream(value.toString().getBytes());
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(is);
+
+            doc.getDocumentElement().normalize();
+
+            NodeList nList = doc.getElementsByTagName("employee");
+
+            for (int temp = 0; temp < nList.getLength(); temp++) {
+
+                Node nNode = nList.item(temp);
+
+                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+
+                    Element eElement = (Element) nNode;
+
+                    String id = eElement.getElementsByTagName("id").item(0).getTextContent();
+                    String name = eElement.getElementsByTagName("name").item(0).getTextContent();
+                    String gender = eElement.getElementsByTagName("gender").item(0).getTextContent();
+
+                    // System.out.println(id + "," + name + "," + gender);
+                    context.write(new Text(id + "," + name + "," + gender), NullWritable.get());
+
+                }
+            }
+        } catch (Exception e) {
+            LogWriter.getInstance().WriteLog(e.getMessage());
+        }
+
+    }
+
+}
+
+
+<Data>
+    <employee>
+        <id>1</id>
+        <name>Adarsh kumar</name>
+        <gender>M</gender>
+    </employee>
+    <employee>
+        <id>2</id>
+        <name>Radha Singh</name>
+        <gender>F</gender>
+    </employee>
+    <employee>
+        <id>3</id>
+        <name>Amit kumar</name>
+        <gender>M</gender>
+    </employee>
+    <employee>
+        <id>4</id>
+        <name>Deepika </name>
+        <gender>F</gender>
+    </employee>
+</Data>

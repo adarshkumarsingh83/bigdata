@@ -1,0 +1,64 @@
+> mvn clean package
+
+#To Start the hadoop process
+$ start-dfs.sh
+$ start-yarn.sh
+
+#To list the processes status
+$ jps
+3473 NameNode
+3817 SecondaryNameNode
+4106 NodeManager
+3982 ResourceManager
+4430 Jps
+3599 DataNode
+
+#input file to load in the table
+$ vi employee.tsv
+------------------------------------------
+1000,adarsh,1983/09/13
+1001,Amit,1986/01/04
+1002,Radha,1986/05/04
+1003,sonu,1986/05/05
+1004,Monu,1982/04/19
+------------------------------------------
+ESC:wq
+
+#To Open hive shell
+$ hive
+
+#To Create a Table in hive
+hive> CREATE TABLE IF NOT EXISTS employee ( eid int, name String, dob String)COMMENT 'Employee details' ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' STORED AS TEXTFILE;
+
+#To load the file into the hive table
+hive> LOAD DATA LOCAL INPATH '/home/hduser/employee.csv' OVERWRITE INTO TABLE employee;
+
+#Adding the jar to the HIve environment
+hive> ADD JAR HiveUserDefineFunction-1.0-SNAPSHOT.jar;
+
+#Creating alias for the Udf Custom Java fucntion to use it as normal function
+hive> CREATE TEMPORARY FUNCTION dataFormat as 'com.espark.hive.udf.date.DateFormatter';
+hive> CREATE TEMPORARY FUNCTION caseConvert as 'com.espark.hive.udf.string.CaseConverter';
+hive> CREATE TEMPORARY FUNCTION strip as 'com.espark.hive.udf.string.Strip';
+
+#This will show the list of all the function in hive
+hive> show function
+
+#To get the description of the Udf
+hive>describe function dataFormat;
+hive>describe function caseConvert;
+hive>describe function strip;
+
+#To get the sample use of the Udf
+hive>describe function extended dataFormat;
+hive>describe function extended caseConvert;
+hive>describe function extended strip;
+
+#To Drop the Temp function
+hive> DROP TEMPORARY FUNCTION IF EXISTS dataFormat;
+hive> DROP TEMPORARY FUNCTION IF EXISTS caseConvert;
+hive> DROP TEMPORARY FUNCTION IF EXISTS strip;
+
+
+#To Test the Udf with hql
+hive> SELECT eid, caseConvert(name,'UPPER'),caseConvert(name,'LOWER'),caseConvert(name,''), dataFormat(dob,'yyyy/MM/dd') FROM employee LIMIT 10

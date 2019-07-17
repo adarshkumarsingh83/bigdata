@@ -1,0 +1,4 @@
+com\espark\adarsh\hadoop\mapper\WordCountMapper.class
+com\espark\adarsh\hadoop\driver\WordCountDriver.class
+com\espark\adarsh\hadoop\ApplicationMain.class
+com\espark\adarsh\hadoop\reducer\WordCountReducer.class

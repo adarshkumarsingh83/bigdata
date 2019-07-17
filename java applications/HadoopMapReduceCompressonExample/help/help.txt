@@ -1,0 +1,94 @@
+$ start-dfs.sh
+$ start-yarn.sh
+$ jps
+3555 ResourceManager
+3971 Jps
+3172 DataNode
+3049 NameNode
+3677 NodeManager
+3390 SecondaryNameNode
+==============================================================================
+#To Create a Root Dir for Data Loading in hadoop
+..............................................................................
+$ hadoop fs -mkdir -p /adarsh/hadoop/data
+
+#For Deletion of the Dir in hdfs
+$ hadoop fs -rm -r /adarsh/hadoop/xyz
+#For Deletion of the file in the hdfs dir
+$ hadoop fs -rm -r /adarsh/hadoop/data/*
+==============================================================================
+#To List the dir for Data loadig in hadoop
+..............................................................................
+$ hadoop fs -ls /adarsh/hadoop
+
+==============================================================================
+#To load the data into the hadoop  (COPYING FILE FROM LFS TO HDFS)
+#create file
+#load the data from file to lfs to hdfs
+#view the data file from hdfs
+..............................................................................
+$ vi input.csv
+---------------------------------------------------
+	    101 adarsh kumar adarsh@kumar
+	    102 radha singh radha@singh
+	    101 adarsh kumar adarsh@kumar
+        102 radha singh radha@singh
+    	101 adarsh kumar adarsh@kumar
+    	102 radha singh radha@singh
+    	101 adarsh kumar adarsh@kumar
+        102 radha singh radha@singh
+--------------------------------------------------
+esc :wq
+
+------------------------------------------------------
+# To compress the file
+$ gzip input.txt
+
+#To create a compress dir in hdfs
+$ hadoop fs -mkdir /adarsh/hadoop/data/compress
+
+#To view the dire in hdfs for  compress file
+$ hadoop fs -ls /adarsh/hadoop/data/
+
+#to load the data to hdfs from lfs
+$ hadoop fs -copyFromLocal input.txt.gz /adarsh/hadoop/data/compress
+
+#To list the data from loaded file from hdfs
+$ hadoop fs -text /adarsh/hadoop/data/compress/input.txt.gz
+	        101 adarsh kumar adarsh@kumar
+    	    102 radha singh radha@singh
+    	    ..........................
+
+==============================================================================
+# copy the jar file to execute
+#provide the permission to execute
+$ chmod 777 hadoop-word-count-basic-1.0-SNAPSHOT.jar
+#To Execute the main
+$ hadoop jar HadoopMapReduceCompressonExample-1.0-SNAPSHOT.jar com.espark.adarsh.hadoop.ApplicationMain /adarsh/hadoop/data/compress/input.txt.gz /adarsh/hadoop/data/compress/wordcount
+
+
+$ hadoop fs -ls /adarsh/hadoop/data/compress
+-rw-r--r--   1 hduser supergroup         92 2017-07-03 00:42 /adarsh/hadoop/data/compress/input.txt.gz
+drwxr-xr-x   - hduser supergroup          0 2017-07-03 00:47 /adarsh/hadoop/data/compress/wordcount
+
+
+$ hadoop fs -ls /adarsh/hadoop/data/compress/wordcount
+-rw-r--r--   1 hduser supergroup          0 2017-07-03 00:47 /adarsh/hadoop/data/compress/wordcount/_SUCCESS
+-rw-r--r--   1 hduser supergroup         77 2017-07-03 00:47 /adarsh/hadoop/data/compress/wordcount/part-r-00000.gz
+
+$ hadoop fs -text  /adarsh/hadoop/data/compress/wordcount/part-r-00000.gz
+,	8
+101	1
+102	1
+103	1
+adarsh	1
+adarsh@kumar	1
+amit	1
+amit@kumar	1
+kumar	1
+kumar,	1
+radha	1
+radha@singh	1
+singh	1
+
+

@@ -1,0 +1,263 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<artifactId>spring-hadoop-samples-mapreduce</artifactId>
+
+	<name>Spring Hadoop Samples - MapReduce and HDFS</name>
+
+	<parent>
+		<groupId>org.springframework.samples</groupId>
+		<artifactId>spring-hadoop-samples</artifactId>
+		<version>1.0.0.BUILD-SNAPSHOT</version>
+		<relativePath>../parent/pom.xml</relativePath>
+	</parent>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<hadoop.examples>hadoop-mapreduce-examples</hadoop.examples>
+		<mapreduce.framework>yarn</mapreduce.framework>
+	</properties>
+
+	<profiles>
+		<profile>
+			<id>hadoop26</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<spring.hadoop.version>2.2.0.RELEASE</spring.hadoop.version>
+				<hadoop.version>2.6.0</hadoop.version>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+					<version>${hadoop.version}</version>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+		<profile>
+			<id>phd30</id>
+			<properties>
+				<spring.hadoop.version>2.2.0.RELEASE-phd30</spring.hadoop.version>
+				<hadoop.version>2.6.0.3.0.0.0-249</hadoop.version>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+					<version>${hadoop.version}</version>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>config</id>
+								<phase>package</phase>
+								<configuration>
+									<tasks>
+										<copy todir="target/appassembler/data">
+											<fileset dir="data"/>
+										</copy>
+										<copy todir="target/appassembler/etc">
+											<fileset dir="etc/phd30"/>
+										</copy>
+									</tasks>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>hdp22</id>
+			<properties>
+				<spring.hadoop.version>2.2.0.RELEASE-hdp22</spring.hadoop.version>
+				<hadoop.version>2.6.0.2.2.6.0-2800</hadoop.version>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+					<version>${hadoop.version}</version>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>config</id>
+								<phase>package</phase>
+								<configuration>
+									<tasks>
+										<copy todir="target/appassembler/data">
+											<fileset dir="data"/>
+										</copy>
+										<copy todir="target/appassembler/etc">
+											<fileset dir="etc/hdp22"/>
+										</copy>
+									</tasks>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>cdh5</id>
+			<properties>
+				<spring.hadoop.version>2.2.0.RELEASE-cdh5</spring.hadoop.version>
+				<hadoop.version>2.5.0-cdh5.3.3</hadoop.version>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+					<version>${hadoop.version}</version>
+					<scope>runtime</scope>
+				</dependency>
+			</dependencies>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>config</id>
+								<phase>package</phase>
+								<configuration>
+									<tasks>
+										<copy todir="target/appassembler/data">
+											<fileset dir="data"/>
+										</copy>
+										<copy todir="target/appassembler/etc">
+											<fileset dir="etc/cdh5"/>
+										</copy>
+									</tasks>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-hadoop</artifactId>
+			<version>${spring.hadoop.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-context-support</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>${hadoop.examples}</artifactId>
+			<version>${hadoop.version}</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.codehaus.groovy</groupId>
+			<artifactId>groovy</artifactId>
+			<version>1.8.5</version>
+			<scope>runtime</scope>
+		</dependency>
+	</dependencies>
+
+	<repositories>	
+		<repository>
+			<id>hortonworks</id>
+			<url>http://repo.hortonworks.com/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<id>hortonworks-jetty</id>
+			<url>http://repo.hortonworks.com/content/repositories/jetty-hadoop</url>
+		</repository>
+		<repository>
+			<id>spring-milestone</id>
+			<url>http://repo.spring.io/libs-milestone</url>
+		</repository>
+	</repositories>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>appassembler-maven-plugin</artifactId>
+				<version>1.2.2</version>
+				<configuration>
+					<repositoryLayout>flat</repositoryLayout>
+					<configurationSourceDirectory>src/main/config</configurationSourceDirectory>
+					<copyConfigurationDirectory>true</copyConfigurationDirectory>
+					<extraJvmArguments>-Dmr.fw=${mapreduce.framework}</extraJvmArguments>
+					<programs>
+						<program>
+							<mainClass>org.springframework.samples.hadoop.mapreduce.Wordcount</mainClass>
+							<name>wordcount</name>
+						</program>
+					</programs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>package</id>
+						<goals>
+							<goal>assemble</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>config</id>
+						<phase>package</phase>
+						<configuration>
+							<tasks>
+								<copy todir="target/appassembler/data">
+									<fileset dir="data"/>
+								</copy>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

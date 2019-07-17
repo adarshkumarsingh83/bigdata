@@ -1,0 +1,95 @@
+$ start-dfs.sh
+$ start-yarn.sh
+$ jps
+3555 ResourceManager
+3971 Jps
+3172 DataNode
+3049 NameNode
+3677 NodeManager
+3390 SecondaryNameNode
+==============================================================================
+#To Create a Root Dir for Data Loading in hadoop
+..............................................................................
+$ hadoop fs -mkdir -p /adarsh/hadoop/data
+
+#For Deletion of the Dir in hdfs
+$ hadoop fs -rm -r /adarsh/hadoop/xyz
+#For Deletion of the file in the hdfs dir
+$ hadoop fs -rm -r /adarsh/hadoop/data/*
+==============================================================================
+#To List the dir for Data loadig in hadoop
+..............................................................................
+$ hadoop fs -ls /adarsh/hadoop
+
+==============================================================================
+#To load the data into the hadoop  (COPYING FILE FROM LFS TO HDFS)
+#create file
+#load the data from file to lfs to hdfs
+#view the data file from hdfs
+..............................................................................
+$ vi input.txt
+---------------------------------------------------
+101,adarsh kumar,10000
+102,radha singh,8000
+103,amit kumar,4000
+105,sonu singh,200
+106,monu singh,1000
+
+--------------------------------------------------
+esc :wq
+..............................................................................
+$ vi lookup.txt
+---------------------------------------------------
+101,it
+102,it
+103,finance
+104,sales
+105,sales
+---------------------------------------------------
+esc :wq
+
+
+#to load the data to hdfs from lfs
+$ hadoop fs -copyFromLocal input.txt /adarsh/hadoop/data
+$ hadoop fs -copyFromLocal lookup.txt /adarsh/hadoop/data
+
+#to view the file in hdfs
+$ hadoop fs -ls /adarsh/hadoop/data
+
+#To list the data from loaded file from hdfs
+$ hadoop fs -cat /adarsh/hadoop/data/input.txt
+	        101 adarsh kumar adarsh@kumar
+    	    102 radha singh radha@singh
+    	    ..........................
+$ hadoop fs -cat /adarsh/hadoop/data/lookup.txt
+
+==============================================================================
+$ mv /home/hduser/Desktop/HadoopDistributedCache-1.0-SNAPSHOT.jar  /home/hduser/
+
+==============================================================================
+# copy the jar file to execute
+#provide the permission to execute
+$ chmod 777 HadoopDistributedCache-1.0-SNAPSHOT.jar
+#To Execute the main
+$ hadoop jar HadoopDistributedCache-1.0-SNAPSHOT.jar com.espark.adarsh.hadoop.ApplicationMain /adarsh/hadoop/data/input.txt /adarsh/hadoop/data/output
+
+
+$ hadoop fs -ls /adarsh/hadoop/data
+-rw-r--r--   1 hduser supergroup        104 2017-06-23 03:15 /adarsh/hadoop/data/input.txt
+-rw-r--r--   1 hduser supergroup         46 2017-07-03 00:59 /adarsh/hadoop/data/lookup.txt
+drwxr-xr-x   - hduser supergroup          0 2017-07-03 02:11 /adarsh/hadoop/data/output
+
+
+
+$ hadoop fs -ls /adarsh/hadoop/data/output
+-rw-r--r--   1 hduser supergroup          0 2017-07-03 02:11 /adarsh/hadoop/data/output/_SUCCESS
+-rw-r--r--   1 hduser supergroup        191 2017-07-03 02:11 /adarsh/hadoop/data/output/part-r-00000
+
+$ hadoop fs -cat  /adarsh/hadoop/data/output/part-r*
+101, it	10000
+102, it	8000
+103, finance	4000
+105, sales	200
+106, null	1000
+
+

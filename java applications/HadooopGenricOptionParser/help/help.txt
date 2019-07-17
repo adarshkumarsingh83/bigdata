@@ -1,0 +1,77 @@
+$ start-dfs.sh
+$ start-yarn.sh
+$ jps
+3555 ResourceManager
+3971 Jps
+3172 DataNode
+3049 NameNode
+3677 NodeManager
+3390 SecondaryNameNode
+==============================================================================
+#To Create a Root Dir for Data Loading in hadoop
+..............................................................................
+$ hadoop fs -mkdir -p /adarsh/hadoop/data
+
+#For Deletion of the Dir in hdfs
+$ hadoop fs -rm -r /adarsh/hadoop/xyz
+#For Deletion of the file in the hdfs dir
+$ hadoop fs -rm -r /adarsh/hadoop/data/*
+==============================================================================
+#To List the dir for Data loading in hadoop
+..............................................................................
+$ hadoop fs -ls /adarsh/hadoop
+
+==============================================================================
+#To load the data into the hadoop  (COPYING FILE FROM LFS TO HDFS)
+#create file
+#load the data from file to lfs to hdfs
+#view the data file from hdfs
+..............................................................................
+$ vi input.csv
+---------------------------------------------------
+	    101 adarsh kumar adarsh@kumar
+	    102 radha singh radha@singh
+	    101 adarsh kumar adarsh@kumar
+        102 radha singh radha@singh
+    	101 adarsh kumar adarsh@kumar
+    	102 radha singh radha@singh
+    	101 adarsh kumar adarsh@kumar
+        102 radha singh radha@singh
+--------------------------------------------------
+esc :wq
+
+#to load the data to hdfs from lfs
+$ hadoop fs -copyFromLocal input.txt /adarsh/hadoop/data
+
+#to view the file in hdfs
+$ hadoop fs -ls /adarsh/hadoop/data
+
+#To list the data from loaded file from hdfs
+$ hadoop fs -cat /adarsh/hadoop/data/input.txt
+	        101 adarsh kumar adarsh@kumar
+    	    102 radha singh radha@singh
+    	    ..........................
+
+==============================================================================
+# copy the jar file to execute
+#provide the permission to execute
+$ chmod 777 hadoop-word-count-basic-1.0-SNAPSHOT.jar
+#To Execute the main
+$ hadoop jar HadooopGenricOptionParser-1.0-SNAPSHOT.jar com.espark.adarsh.hadoop.ApplicationMain  -D mapred.reduce.tasks=4 /adarsh/hadoop/data/input.txt /adarsh/hadoop/data/wordcount
+
+
+$ hadoop fs -ls /adarsh/hadoop/data
+-rw-r--r--   1 hduser supergroup         63 2017-06-21 06:03 /adarsh/hadoop/data/input.txt
+drwxr-xr-x   - hduser supergroup          0 2017-06-21 08:11 /adarsh/hadoop/data/wordcount
+
+
+$ hadoop fs -ls /adarsh/hadoop/data/wordcount
+-rw-r--r--   1 hduser supergroup          0 2017-06-21 08:11 /adarsh/hadoop/data/wordcount/_SUCCESS
+-rw-r--r--   1 hduser supergroup         70 2017-06-21 08:11 /adarsh/hadoop/data/wordcount/part-r-00000
+
+$ hadoop fs -cat  /adarsh/hadoop/data/wordcount/part-r*
+101,adarsh	1
+102,radha	1
+kumar,adarsh@kumar	1
+singh,radha@singh1	1
+

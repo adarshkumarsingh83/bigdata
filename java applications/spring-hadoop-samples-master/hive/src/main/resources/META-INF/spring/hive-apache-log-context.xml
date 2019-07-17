@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/hadoop"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+	  http://www.springframework.org/schema/hadoop http://www.springframework.org/schema/hadoop/spring-hadoop.xsd">
+
+	<context:property-placeholder location="hadoop.properties,hive.properties"/>
+
+	<configuration>
+		fs.defaultFS=${hd.fs}
+		yarn.resourcemanager.address=${hd.rm}
+		mapreduce.framework.name=yarn
+		mapreduce.jobhistory.address=${hd.jh}
+	</configuration>
+
+	<script id="hdfsScript" language="groovy" location="set-hive-permissions.groovy" run-at-startup="true"/>
+
+	<script id="setupScript" language="groovy" run-at-startup="true">
+		<property name="localSourceFile" value="${basedir}/${localLogFile}"/>
+		<property name="inputDir" value="${hive.input.path}"/>
+		<property name="outputDir" value="${hive.output.path}"/>
+		if (!fsh.test(inputDir)) {
+			fsh.mkdir(inputDir);
+			fsh.chmod(700, inputDir)
+		}
+		fsh.rm(inputDir+"/*");
+		if (!fsh.test(outputDir)) {
+			fsh.mkdir(outputDir);
+			fsh.chmod(700, outputDir)
+		}
+		fsh.rmr(outputDir+"/*");
+		fsh.copyFromLocal(localSourceFile, inputDir);
+		fsh.copyFromLocal("${app.repo}/hive-contrib-${hive.version}.jar", inputDir);
+	</script>
+
+	<!-- This sample requires a running HiveServer2 -->
+	<hive-client-factory id="hiveClientFactory" hive-data-source-ref="hiveDataSource"/>
+
+	<beans:bean id="hiveDriver" class="org.apache.hive.jdbc.HiveDriver"/>
+	<beans:bean id="hiveDataSource" class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
+		<beans:constructor-arg name="driver" ref="hiveDriver"/>
+		<beans:constructor-arg name="url" value="${hive.url}"/>
+	</beans:bean>
+	 
+	<hive-runner id="hiveRunner" run-at-startup="false" >
+		<script location="apache-log-simple.hql">
+				<arguments>
+					hiveContribJar=hdfs://${hive.input.path}/hive-contrib-${hive.version}.jar
+					localInPath="${hive.input.path}/apache.log"
+				</arguments>
+		</script>
+	</hive-runner>
+
+</beans:beans>
